@@ -1,8 +1,27 @@
 import torch
 import torch.utils.data
-from torch._six import container_abcs, string_classes, int_classes
+from torch.utils.data._utils import collate
+from types import NoneType
+from typing import Callable, Optional, Union
+import collections.abc as container_abcs
 
 import decode.generic
+
+
+def collate_nonetype_fn(
+    batch,
+    *,
+    collate_fn_map: Optional[dict[Union[type, tuple[type, ...]], Callable]] = None,
+):
+    return None
+
+
+def collate_emitterset_fn(
+    batch,
+    *,
+    collate_fn_map: Optional[dict[Union[type, tuple[type, ...]], Callable]] = None,
+):
+    return [em for em in batch]
 
 
 def smlm_collate(batch):
@@ -14,29 +33,9 @@ def smlm_collate(batch):
         batch
     """
     elem = batch[0]
-    # ToDo: This is super ugly, however I don't know how to overcome this, because one must break out of recursion
-    # BEGIN PARTLY INSERTION of default collate
-    if isinstance(elem, torch.Tensor):
-        out = None
-        if torch.utils.data.get_worker_info() is not None:
-            # If we're in a background process, concatenate directly into a
-            # shared memory tensor to avoid an extra copy
-            numel = sum([x.numel() for x in batch])
-            storage = elem.storage()._new_shared(numel)
-            out = elem.new(storage)
-        return torch.stack(batch, 0, out=out)
-    elif isinstance(elem, container_abcs.Sequence):
-        # check to make sure that the elements in batch have consistent size
-        it = iter(batch)
-        elem_size = len(next(it))
-        if not all(len(elem) == elem_size for elem in it):
-            raise RuntimeError('each element in list of batch should be of equal size')
-        transposed = zip(*batch)
-        return [smlm_collate(samples) for samples in transposed]
-    # END INSERT
-    elif elem is None:
+    if elem is None:
         return None
-    elif isinstance(elem, decode.generic.emitter.EmitterSet):
-        return [em for em in batch]
-    else:
-        return torch.utils.data.dataloader.default_collate(batch)
+
+    collate.default_collate_fn_map.update({NoneType: collate_nonetype_fn,
+                                           decode.generic.emitter.EmitterSet: collate_emitterset_fn})
+    return collate.default_collate(batch)
