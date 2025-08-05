@@ -62,7 +62,12 @@ class LoadSaveModel:
 
         """
         if device is None:
-            device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
+            if torch.cuda.is_available():
+                device = 'cuda'
+            elif torch.backends.mps.is_available():
+                device = 'mps'
+            else:
+                device = 'cpu'
 
         model = self.model
         print('Model instantiated.')

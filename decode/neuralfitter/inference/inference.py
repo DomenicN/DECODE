@@ -159,7 +159,8 @@ class LiveInfer(Infer):
                  stream, time_wait=5, safety_buffer: int = 20,
                  frame_proc=None, post_proc=None,
                  device: Union[
-                     str, torch.device] = 'cuda:0' if torch.cuda.is_available() else 'cpu',
+                    #  str, torch.device] = 'cuda:0' if torch.cuda.is_available() else 'cpu',
+                    str, torch.device] = 'mps' if torch.backends.mps.is_available() else 'cpu',
                  batch_size: Union[int, str] = 'auto', num_workers: int = 0,
                  pin_memory: bool = False,
                  forward_cat: Union[str, Callable] = 'emitter'):

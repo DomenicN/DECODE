@@ -25,7 +25,7 @@ def train(model, optimizer, loss, dataloader, grad_rescale, grad_mod, epoch, dev
 
         """Ship the data to the correct device"""
         x, y_tar, weight = ship_device([x, y_tar, weight], device)
-        
+
         """Forward the data"""
         y_out = model(x)
 

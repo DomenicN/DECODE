@@ -14,14 +14,23 @@ from decode.neuralfitter.utils.dataloader_customs import smlm_collate
 @deprecated(reason="Depr. in favour of inference.Infer", version="0.1.dev")
 class PredictEval(ABC):
     @abstractmethod
-    def __init__(self, model, post_processor, evaluator, batch_size, device='cuda'):
+    def __init__(self, model, post_processor, evaluator, batch_size, device=None):
         super().__init__()
 
         self.model = model
         self.post_processor = post_processor
         self.evaluator = evaluator
         self.batch_size = batch_size
-        self.device = torch.device(device)
+
+        if device is None:
+            if torch.cuda.is_available():
+                self.device = torch.device('cuda')
+            elif torch.backends.mps.is_available():
+                self.device = torch.device('mps')
+            else:
+                self.device = torch.device('cpu')
+        else:
+            self.device = torch.device(device)
 
         self.dataloader = None
         self.gt = None
@@ -54,7 +63,7 @@ class PredictEval(ABC):
                 output = self.model(x_in)
                 if output_raw:
                     raw_frames.append(output.detach().cpu())
-                """In post processing we need to make sure that we get a single Emitterset for each batch, 
+                """In post processing we need to make sure that we get a single Emitterset for each batch,
                 so that we can easily concatenate."""
                 em_outs.append(self.post_processor.forward(output))
 
@@ -113,7 +122,7 @@ class PredictEval(ABC):
 @deprecated(reason="Depr. in favour of inference.Infer", version="0.1.dev")
 class PredictEvalSimulation(PredictEval):
     def __init__(self, eval_size, prior, simulator, model, post_processor, evaluator=None, param=None,
-                 device='cuda', batch_size=32, input_preparation=None, multi_frame=True, dataset=None,
+                 device=None, batch_size=32, input_preparation=None, multi_frame=True, dataset=None,
                  data_loader=None):
 
         super().__init__(model, post_processor, evaluator, batch_size, device)
@@ -156,7 +165,7 @@ class PredictEvalSimulation(PredictEval):
 
 @deprecated(reason="Depr. in favour of inference.Infer", version="0.1.dev")
 class PredictEvalTif(PredictEval):
-    def __init__(self, tif_stack, activations, model, post_processor, frame_proc, evaluator=None, device='cuda',
+    def __init__(self, tif_stack, activations, model, post_processor, frame_proc, evaluator=None, device=None,
                  batch_size=32, frame_window: int = 3):
 
         super().__init__(model=model,

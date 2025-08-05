@@ -137,7 +137,9 @@ def live_engine_setup(param_file: str, device_overwrite: str = None, debug: bool
         if device_ix is not None:
             # do this instead of set env variable, because torch is inevitably already imported
             torch.cuda.set_device(device)
-    elif not torch.cuda.is_available():
+    elif torch.backends.mps.is_available():
+        device = 'mps'
+    else:
         device = 'cpu'
 
     if param.Hardware.torch_multiprocessing_sharing_strategy is not None:

@@ -20,7 +20,7 @@ class SMAPSplineCoefficient:
         self.dz = self.calib_mat.cspline.dz
         self.spline_roi_shape = self.coeff.shape[:3]
 
-    def init_spline(self, xextent, yextent, img_shape, device='cuda:0' if torch.cuda.is_available() else 'cpu', **kwargs):
+    def init_spline(self, xextent, yextent, img_shape, device=None, **kwargs):
         """
         Initializes the CubicSpline function
 
@@ -33,7 +33,19 @@ class SMAPSplineCoefficient:
         Returns:
 
         """
-        psf = psf_kernel.CubicSplinePSF(xextent=xextent, yextent=yextent, img_shape=img_shape, ref0=self.ref0,
-                                        coeff=self.coeff, vx_size=(1., 1., self.dz), device=device, **kwargs)
+        if device is None:
+            if torch.cuda.is_available():
+                self.device = torch.device('cuda')
+            elif torch.backends.mps.is_available():
+                self.device = torch.device('mps')
+            else:
+                self.device = torch.device('cpu')
+        else:
+            self.device = torch.device(device)
+        # psf = psf_kernel.CubicSplinePSF(xextent=xextent, yextent=yextent, img_shape=img_shape, ref0=self.ref0,
+        #                                 coeff=self.coeff, vx_size=(1., 1., self.dz), device=device, **kwargs)
+
+        psf = psf_kernel.GaussianPSF(xextent=xextent, yextent=yextent, zextent=(-800, 800),
+                                     img_shape=img_shape, sigma_0=0.7)
 
         return psf
