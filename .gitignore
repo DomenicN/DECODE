@@ -177,3 +177,9 @@ cmdlog.txt
 
 # Jupyter notebook
 testing.ipynb
+
+# logs
+logs
+
+# sample data
+sample_data
