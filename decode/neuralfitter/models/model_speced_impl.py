@@ -32,9 +32,10 @@ class SigmaMUNet(model_param.DoubleMUnet):
                          disabled_attributes=disabled_attributes,
                          use_last_nl=False)
 
+        # Changed padding here since True is not an accepted value
         self.mt_heads = torch.nn.ModuleList(
             [model_param.MLTHeads(in_channels=inter_features, out_channels=ch_out,
-                                  activation=activation, last_kernel=1, padding=True,
+                                  activation=activation, last_kernel=1, padding=1,
                                   norm=norm_head, norm_groups=norm_head_groups)
              for ch_out in self.out_channels_heads]
         )
@@ -58,6 +59,7 @@ class SigmaMUNet(model_param.DoubleMUnet):
         x = self._forward_core(x)
 
         """Forward through the respective heads"""
+
         x_heads = [mt_head.forward(x) for mt_head in self.mt_heads]
         x = torch.cat(x_heads, dim=1)
 
