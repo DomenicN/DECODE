@@ -219,8 +219,8 @@ class GaussianMMLoss(Loss):
         pxyz_mu = pxyz_mu[p_inds[0], :, p_inds[1], p_inds[2]]
 
         """Convert px shifts to absolute coordinates"""
-        pxyz_mu[:, 1] += self._offset2coord.bin_ctr_x[p_inds[1]].to(pxyz_mu.device)
-        pxyz_mu[:, 2] += self._offset2coord.bin_ctr_y[p_inds[2]].to(pxyz_mu.device)
+        pxyz_mu[:, 1] += self._offset2coord.bin_ctr_x.to(pxyz_mu.device)[p_inds[1]]
+        pxyz_mu[:, 2] += self._offset2coord.bin_ctr_y.to(pxyz_mu.device)[p_inds[2]]
 
         """Flatten img dimension --> N x (HxW) x 4"""
         pxyz_mu = pxyz_mu.reshape(batch_size, -1, 4)
@@ -270,7 +270,7 @@ class GaussianMMLoss(Loss):
         bg_loss = self._bg_loss(bg, tar_bg).sum(-1).sum(-1)
         gmm_loss = self._compute_gmm_loss(p, pxyz_mu, pxyz_sig, tar_param, tar_mask)
 
-        """Stack in 2 channels. 
+        """Stack in 2 channels.
         Factor 2 because original impl. adds the two terms, but this way it's better for logging."""
         loss = 2 * torch.stack((gmm_loss, bg_loss), 1) * self._ch_weight
 
